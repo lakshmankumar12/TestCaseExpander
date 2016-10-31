@@ -8,6 +8,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("file",             help="File containing all steps and testcases")
 parser.add_argument("-o", "--output",   help="output file name")
+parser.add_argument("-w", "--warnDangSB",   help="warning unreferenced StepBlocks", action="store_true")
+#parser.add_argument("-e", "--exitOnWarning",   help="exit on warnings", action="store_true")
 
 parsed_args = parser.parse_args()
 
@@ -18,6 +20,7 @@ DemarcaterPattern="=========="
 StepBlockPattern="StepBlock: "
 ImportPattern="Import: "
 TestcasePattern="TestCase: "
+NonImportedStepBlocks="NonImportedStepBlocks"
 
 class StepBlock:
     Collection = {}
@@ -30,10 +33,11 @@ class StepBlock:
         self.name = name
         self.lineno = lineno
         if self.name in StepBlock.Collection:
-            raise Exception("StepBlock with name:%s already exists at line:%d"%self.name, self.lineno)
+            raise Exception("StepBlock with name:%s already exists at line:%d"%(self.name, StepBlock.Collection[self.name].lineno))
         StepBlock.Collection[self.name] = self
         self.type = "StepBlock"
         self.contents = ""
+        self.referredCount = 0
         print ("Created StepBlock:%s"%self.name)
 
     def addALine(self, line):
@@ -41,6 +45,7 @@ class StepBlock:
 
     def addABlock(self, block):
         self.contents += block.contents
+        block.referredCount += 1
 
     def windup(self, lineno):
         self.finishedBefore = lineno
@@ -58,20 +63,21 @@ class TestCase:
         self.name = name
         self.lineno = lineno
         if self.name in TestCase.Collection:
-            raise Exception("Testcase with name:%s already exists at line:%d"%self.name, self.lineno)
+            raise Exception("Testcase with name:%s already exists at line:%d"%(self.name, TestCase.Collection[self.name].lineno))
         TestCase.Collection[self.name] = self
         TestCase.List.append(self)
         self.index = TestCase.ListIndex
         TestCase.ListIndex += 1
         self.type = "TestCase"
-        self.contents = ""
+        self.tccontents = ""
         print ("Created TestCase:%s"%self.name)
 
     def addALine(self, line):
-        self.contents += line
+        self.tccontents += line
 
     def addABlock(self, block):
-        self.contents += block.contents
+        self.tccontents += block.contents
+        block.referredCount += 1
 
     def windup(self, lineno):
         self.finishedBefore = lineno
@@ -113,9 +119,19 @@ with open(inputfilename, "r") as fd:
         else:
             current_block.addALine(line)
 
+if parsed_args.warnDangSB:
+    exit = 0
+    for name,sb in StepBlock.Collection.iteritems():
+        if sb.referredCount == 0 and name != NonImportedStepBlocks:
+            print ("Warning: StepBlock %s, line:%d not imported anywhere"%(name,sb.lineno))
+            exit = 1
+    if exit:
+        sys.exit(0)
+
+
 with open(outputfilename,"w") as fd:
     for testcase in TestCase.List:
-        print ("Testcase: %s"%(testcase.name), file=fd)
-        print (testcase.contents, file=fd)
+        print ("%s%s"%(TestcasePattern, testcase.name), file=fd)
+        print (testcase.tccontents, file=fd)
         print (DemarcaterPattern, file=fd)
 
