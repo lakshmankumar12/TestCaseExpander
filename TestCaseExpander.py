@@ -44,6 +44,7 @@ class StepBlock:
         self.contents += line
 
     def addABlock(self, block):
+        self.contents += ("\n#" + block.name + '\n')
         self.contents += block.contents
         block.referredCount += 1
 
@@ -76,6 +77,7 @@ class TestCase:
         self.tccontents += line
 
     def addABlock(self, block):
+        self.tccontents += ("\n#" + block.name + '\n')
         self.tccontents += block.contents
         block.referredCount += 1
 
