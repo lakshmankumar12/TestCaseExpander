@@ -20,7 +20,7 @@ DemarcaterPattern="=========="
 StepBlockPattern="StepBlock: "
 ImportPattern="Import: "
 TestcasePattern="TestCase: "
-NonImportedStepBlocks="NonImportedStepBlocks"
+NonImportedStepBlock="NonImportedStepBlock-"
 
 class StepBlock:
     Collection = {}
@@ -124,7 +124,7 @@ with open(inputfilename, "r") as fd:
 if parsed_args.warnDangSB:
     exit = 0
     for name,sb in StepBlock.Collection.iteritems():
-        if sb.referredCount == 0 and name != NonImportedStepBlocks:
+        if sb.referredCount == 0 and not name.startswith(NonImportedStepBlock):
             print ("Warning: StepBlock %s, line:%d not imported anywhere"%(name,sb.lineno))
             exit = 1
     if exit:
