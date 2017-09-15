@@ -1,4 +1,4 @@
 .*.swp
 *.pyc
-*.out
+*.out.*
 *.test

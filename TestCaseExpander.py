@@ -13,6 +13,11 @@ parser.add_argument("-w", "--warnDangSB",   help="warning unreferenced StepBlock
 
 parsed_args = parser.parse_args()
 
+if not parsed_args.output:
+    print("You should supply output file")
+    parser.print_help()
+    sys.exit(1)
+
 inputfilename = parsed_args.file
 outputfilename = parsed_args.output
 

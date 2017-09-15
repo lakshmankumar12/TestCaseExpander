@@ -1,0 +1,26 @@
+StepBlock: PingFromWClient
+
+#@wclient
+ping 192.15.2.2 -s 1000 -c 1
+===============
+StepBlock: PingFromEClientGood
+
+#@eclient
+ping 192.2.115.2 -s 1000 -c 1
+===============
+StepBlock: PingFromEClientBad
+
+#@eclient
+ping 192.2.15.2 -s 1000 -c 1
+===============
+StepBlock: SetupTcpDumpEclient
+
+#@eclient
+tcpdump -i gre315public
+===============
+TestCase: SimpleTestCase
+
+Import: SetupTcpDumpEclient
+Import: PingFromWClient
+Import: PingFromEClientGood
+Import: PingFromEClientBad
