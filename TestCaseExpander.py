@@ -30,13 +30,14 @@ NonImportedStepBlock="NonImportedStepBlock-"
 class StepBlock:
     Collection = {}
 
-    def __init__(self, line, lineno):
+    def __init__(self, line, lineno, filename):
         name=line[len(StepBlockPattern):]
         name=name.strip()
         if not name:
             raise Exception("No name found for StepBlock in line:%s"%line)
         self.name = name
         self.lineno = lineno
+        self.filename = filename
         if self.name in StepBlock.Collection:
             raise Exception("StepBlock with name:%s already exists at line:%d"%(self.name, StepBlock.Collection[self.name].lineno))
         StepBlock.Collection[self.name] = self
@@ -97,31 +98,31 @@ with open(inputfilename, "r") as fd:
             current_block=None
         elif line.startswith(StepBlockPattern):
             if current_block:
-                print ("StepBlock in middle of a %s block with name:%s. line_no:%d, line:s"%(current_block.type, current_block.name, line_no, line.strip()))
+                print ("%s:%d: StepBlock in middle of a %s block with name:%s. line:s"%(inputfilename, line_no, current_block.type, current_block.name, line.strip()))
                 sys.exit(1)
             try:
-              current_block = StepBlock(line, line_no)
+              current_block = StepBlock(line, line_no, inputfilename)
             except Exception, e:
-                print ("Parse Error at line_no:%d, Error:%s"%(line_no, str(e).strip()))
+                print ("%s:%d: Parse Error, Error:%s"%(inputfilename, line_no, str(e).strip()))
                 sys.exit(1)
         elif line.startswith(ImportPattern):
             if not current_block:
-                print ("Import outside of any block. line_no:%d, line:s"%(line_no, line.strip()))
+                print ("%s:%d: Import outside of any block. line:s"%(inputfilename, line_no, line.strip()))
                 sys.exit(1)
             name=line[len(ImportPattern):]
             name=name.strip()
             if name not in StepBlock.Collection:
-                print ("StepBlock %s not defined so far. line_no:%d, line:%s"%(name, line_no, line.strip()))
+                print ("%s:%d: StepBlock %s not defined so far. line:%s"%(inputfilename, line_no, name, line.strip()))
                 sys.exit(1)
             current_block.addABlock(StepBlock.Collection[name])
         elif line.startswith(TestcasePattern):
             if current_block:
-                print ("TestCase in middle of a %s block with name:%s. line_no:%d, line:s"%(current_block.type, current_block.name, line_no, line.strip()))
+                print ("%s:%d: TestCase in middle of a %s block with name:%s. line:s"%(inputfilename, line_no, current_block.type, current_block.name, line.strip()))
                 sys.exit(1)
             try:
               current_block = TestCase(line, line_no)
             except Exception, e:
-                print ("Parse Error at line_no:%d, Error:%s"%(line_no, str(e).strip()))
+                print ("%s:%d: Parse Error, Error:%s"%(inputfilename, line_no, str(e).strip()))
                 sys.exit(1)
         else:
             current_block.addALine(line)
@@ -130,7 +131,7 @@ if parsed_args.warnDangSB:
     exit = 0
     for name,sb in StepBlock.Collection.iteritems():
         if sb.referredCount == 0 and not name.startswith(NonImportedStepBlock):
-            print ("Warning: StepBlock %s, line:%d not imported anywhere"%(name,sb.lineno))
+            print ("%s:%d: Warning: StepBlock %s, not imported anywhere"%(sb.filename, sb.lineno, name))
             exit = 1
     if exit:
         sys.exit(0)
