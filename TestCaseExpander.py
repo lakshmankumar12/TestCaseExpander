@@ -128,18 +128,17 @@ with open(inputfilename, "r") as fd:
             current_block.addALine(line)
 
 if parsed_args.warnDangSB:
-    exit = 0
     for name,sb in StepBlock.Collection.iteritems():
         if sb.referredCount == 0 and not name.startswith(NonImportedStepBlock):
             print ("%s:%d: Warning: StepBlock %s, not imported anywhere"%(sb.filename, sb.lineno, name))
-            exit = 1
-    if exit:
-        sys.exit(0)
 
 
+count = 0
 with open(outputfilename,"w") as fd:
     for testcase in TestCase.List:
         print ("%s%s"%(TestcasePattern, testcase.name), file=fd)
         print (testcase.tccontents, file=fd)
         print (DemarcaterPattern, file=fd)
+        count += 1
+print("Wrote %d testcases to %s"%(count,outputfilename))
 
